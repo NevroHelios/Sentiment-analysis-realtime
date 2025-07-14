@@ -1,15 +1,26 @@
-# Load model directly
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers.pipelines import pipeline
-from time import time
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
+from inference import get_gentiment
 
-tokenizer = AutoTokenizer.from_pretrained("models/")
-model = AutoModelForSequenceClassification.from_pretrained("models/")
+app = FastAPI()
 
-pipe = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device="cuda")
+class SentimentRequest(BaseModel):
+    text: str
 
-t = time()
-result = pipe("He never went out without a book under his arm")
-print(result)
-print(f"Time takes: {time() - t}") # Time takes: 0.3239879608154297
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/sentiment")
+def sentiment_analysis(request: SentimentRequest):
+    return get_gentiment(request.text)
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Sentiment Analysis API"}
