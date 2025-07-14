@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/sentiment")
+@app.post("/predict")
 def sentiment_analysis(request: SentimentRequest):
     return get_gentiment(request.text)
 
