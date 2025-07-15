@@ -1,0 +1,52 @@
+name: Docker Image CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Verify Docker Compose
+      run: |
+        docker --version
+        docker compose version
+    
+    - name: Build and start containers
+      run: docker compose up --build -d
+    
+    - name: Wait for containers to be ready
+      run: |
+        echo "Waiting for containers to start..."
+        sleep 45
+    
+    - name: Check container status
+      run: docker compose ps
+      
+    - name: Test containers are healthy
+      run: |
+        echo "Containers are running"
+    
+    - name: Stop containers
+      run: docker compose down
+    
+    - name: Tag images with timestamp
+      run: |
+        TIMESTAMP=$(date +%s)
+        BACKEND_IMAGE=$(docker compose images -q backend)
+        FRONTEND_IMAGE=$(docker compose images -q frontend)
+        
+        if [ ! -z "$BACKEND_IMAGE" ]; then
+          docker tag $BACKEND_IMAGE sent-clf-realtime-backend:$TIMESTAMP
+          echo "Backend image tagged: sent-clf-realtime-backend:$TIMESTAMP"
+        fi
+        
+        if [ ! -z "$FRONTEND_IMAGE" ]; then
+          docker tag $FRONTEND_IMAGE sent-clf-realtime-frontend:$TIMESTAMP
+          echo "Frontend image tagged: sent-clf-realtime-frontend:$TIMESTAMP"
+        fi
+        
+        echo "Images tagged with timestamp: $TIMESTAMP"
