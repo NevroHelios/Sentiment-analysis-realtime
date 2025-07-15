@@ -46,7 +46,7 @@ A full-stack application for real-time sentiment analysis using React frontend a
 
 #### Machine Learning Pipeline
 - **Base Model**: Pre-trained transformer model
-- **Optimization**: ONNX format for faster inference
+- **Optimization**: ONNX format for faster inference (~10-15ms)
 - **Training**: Fine-tuning capabilities with custom datasets
 - **Monitoring**: Weights & Biases (wandb) integration
 
