@@ -21,11 +21,45 @@ jobs:
     - name: Wait for containers to be ready
       run: |
         echo "Waiting for containers to start..."
-        sleep 30
+        sleep 45
     
     - name: Check container status
       run: docker compose ps
-    
+
+    - name: Test FastAPI backend health
+      run: |
+        echo "Testing FastAPI backend..."
+        
+        # is fastapi responding
+        for i in {1..30}; do
+          if curl -f http://localhost:8000/docs > /dev/null 2>&1; then
+            echo "✅ FastAPI backend is responding"
+            break
+          fi
+          echo "⏳ Waiting for backend to start... (attempt $i/30)"
+          sleep 2
+        done
+        
+        # Test the /predict endpoint
+        echo "Testing /predict endpoint..."
+        response=$(curl -s -w "%{http_code}" -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"text": "This is a test message"}' \
+          http://localhost:8000/predict)
+        
+        http_code="${response: -3}"
+        response_body="${response%???}"
+        
+        echo "HTTP Status Code: $http_code"
+        echo "Response Body: $response_body"
+        
+        if [ "$http_code" = "200" ]; then
+          echo "✅ /predict endpoint test passed!"
+        else
+          echo "❌ /predict endpoint test failed with status code: $http_code"
+          exit 1
+        fi
+      
     - name: Test containers are healthy
       run: |
         echo "Containers are running"
