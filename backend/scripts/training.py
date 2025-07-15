@@ -5,6 +5,7 @@ import wandb
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+from time import time
 
 load_dotenv()
 
@@ -28,13 +29,14 @@ def train(
     best_loss = float('inf')
 
     api_key = os.getenv('WANDB_API_KEY')
-    assert api_key is not None
-    wandb.login(key=api_key)
-    wandb.init(project="sent-clf finetuning", name="fine run")
-    wandb.watch(model, log="all")
+    if api_key:
+        wandb.login(key=api_key)
+        wandb.init(project="sent-clf finetuning", name="fine run", dir=os.getenv("WANDB_DIR", "./wandb"))
+        wandb.watch(model, log="all")
 
     progress_bar = tqdm(range(num_training_steps), desc="Training Progress")
     model.to(device)
+    t = time() # to calculate the training time
     for epoch in range(epochs):
         model.train()
         for batch in dataloader:
@@ -53,11 +55,12 @@ def train(
 
             metrices["loss"].append(loss.item())
             metrices["accuracy"].append((outputs.logits.argmax(dim=-1) == batch['labels']).float().mean().item())
-            wandb.log({
-                'Loss': loss.item(),
-                'Accuracy': (outputs.logits.argmax(dim=-1) == batch['labels']).float().mean().item(),
-                'Step': progress_bar.n,
-            })
+            if api_key:
+                wandb.log({
+                    'Loss': loss.item(),
+                    'Accuracy': (outputs.logits.argmax(dim=-1) == batch['labels']).float().mean().item(),
+                    'Step': progress_bar.n,
+                })
 
             if loss.item() < best_loss:
                 best_loss = loss.item()
@@ -65,5 +68,7 @@ def train(
 
             progress_bar.update(1)
 
-    wandb.finish()
-    return metrices
+    time_taken = time() - t
+    if api_key:
+        wandb.finish()
+    return metrices, time_taken

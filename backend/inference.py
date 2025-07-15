@@ -5,11 +5,19 @@ from transformers.pipelines import pipeline
 from typing import Dict, Any, List
 import os
 
-onnx_model_dir = os.path.join(os.path.dirname(__file__), "models", "onnx")
+models_dir = os.path.join(os.path.dirname(__file__), "models")
+onnx_model_dir = os.path.join(models_dir, "onnx")
 assert os.path.exists(onnx_model_dir), "ONNX model directory does not exist."
 
 model = ORTModelForSequenceClassification.from_pretrained(onnx_model_dir)
-tokenizer = AutoTokenizer.from_pretrained(onnx_model_dir)
+try:
+    tokenizer = AutoTokenizer.from_pretrained(onnx_model_dir)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(models_dir)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load tokenizer from {onnx_model_dir} or {models_dir}.") from e
+except:
+    pass
 
 pipe = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device="cpu") # type: ignore
 

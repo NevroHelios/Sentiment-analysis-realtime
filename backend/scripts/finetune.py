@@ -11,7 +11,8 @@ from torch.optim import AdamW
 from transformers.optimization import get_scheduler
 from torch.utils.data import DataLoader
 
-from utils import train
+from training import train
+from save_model_as_onnx import convert_and_save
 
 # set random seed
 torch.manual_seed(42)
@@ -53,9 +54,10 @@ class CustomDataset(torch.utils.data.Dataset):
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune a model.")
     parser.add_argument("--data", type=str, default="data.jsonl", help="Data file name. Put the data file inside the `data` directory or `the absolute path`.")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs.")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for training.")
     parser.add_argument("--model_dir", type=str, default=model_dir, help="Directory where the model is stored.")
+    parser.add_argument("--tokenizer_dir", type=str, default=model_dir, help="Directory where the tokenizer is stored.")
     parser.add_argument("--output_dir", type=str, default=output_dir, help="Directory to save the fine-tuned model.")
     parser.add_argument("--log_dir", type=str, default=log_dir, help="Directory to save training logs.")
     parser.add_argument("--learning_rate", '--lr', type=float, default=5e-5, help="Learning rate for training.")
@@ -70,12 +72,12 @@ def main():
         else:
             raise FileNotFoundError(f"Data file {data_path} does not exist. Please provide a valid path.")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = AutoModelForSequenceClassification.from_pretrained(model_dir, num_labels=2)  
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_dir)
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_dir, num_labels=2)
 
     train_dataset = CustomDataset(data_path, tokenizer)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    optimizer = AdamW(model.parameters(), lr=5e-5)
+    optimizer = AdamW(model.parameters(), lr=args.learning_rate)
     num_training_steps = args.epochs * len(train_loader)
     lr_scheduler = get_scheduler(
         "linear",
@@ -84,7 +86,7 @@ def main():
         num_training_steps=num_training_steps,
     )
 
-    results = train(
+    results, time_taken = train(
         num_training_steps=num_training_steps,
         model=model,
         dataloader=train_loader,
@@ -96,7 +98,9 @@ def main():
         device=device
     )
 
-    print(f"Training completed. Results: {results}")
+    # print(f"Training completed. Results: {results}")
+    print(f"Training completed in {time_taken:.2f} seconds.")
+    convert_and_save(model_dir=args.output_dir)
 
 if __name__ == "__main__":
     main()

@@ -21,7 +21,7 @@ jobs:
     - name: Wait for containers to be ready
       run: |
         echo "Waiting for containers to start..."
-        sleep 45
+        sleep 30
     
     - name: Check container status
       run: docker compose ps
