@@ -5,3 +5,4 @@ optimum[onnxruntime]==1.26.1
 torch==2.5.1+cpu
 fastapi[standard]==0.115.13
 accelerate==1.8.1
+wandb=0.21.0

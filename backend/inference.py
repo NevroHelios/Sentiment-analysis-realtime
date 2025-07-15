@@ -2,11 +2,11 @@ from optimum.onnxruntime import ORTModelForSequenceClassification
 from transformers import AutoTokenizer
 from time import time
 from transformers.pipelines import pipeline
-from pathlib import Path
 from typing import Dict, Any, List
+import os
 
-onnx_model_dir = Path("./models/onnx/")
-assert onnx_model_dir.exists(), "ONNX model directory does not exist."
+onnx_model_dir = os.path.join(os.path.dirname(__file__), "models", "onnx")
+assert os.path.exists(onnx_model_dir), "ONNX model directory does not exist."
 
 model = ORTModelForSequenceClassification.from_pretrained(onnx_model_dir)
 tokenizer = AutoTokenizer.from_pretrained(onnx_model_dir)
