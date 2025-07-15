@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY requirements.txt ./
 
-RUN pip install -r requirements.txt
+RUN pip install --retries=3 --timeout=30 -r requirements.txt
 
 COPY . .
 

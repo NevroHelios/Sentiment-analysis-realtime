@@ -27,7 +27,7 @@ def get_gentiment(text_for_inference: str) -> Dict[str, Any]:
     time_taken = time() - t
     try:
         assert isinstance(result, List) and len(result) == 1
-        result[0]['time_taken'] = time_taken
+        result[0]['time_taken'] = round(time_taken * 1000, 2)
         return result[0]
     except Exception as e:
         return {"error": e}
