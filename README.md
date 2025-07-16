@@ -97,6 +97,8 @@ Weights & Biases provides:
 # Clone the repository
 git clone https://github.com/NevroHelios/Sentiment-analysis-realtime.git
 cd Sentiment-analysis-realtime
+git lfs install # to install lfs
+git lfs pull # to pull the model weights
 
 # Build and start all services
 docker compose up --build
