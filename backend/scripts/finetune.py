@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import json
 import argparse
+import requests
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # from transformers.trainer import Trainer
@@ -54,7 +55,7 @@ class CustomDataset(torch.utils.data.Dataset):
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune a model.")
     parser.add_argument("--data", type=str, default="data.jsonl", help="Data file name. Put the data file inside the `data` directory or `the absolute path`.")
-    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs.")
+    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for training.")
     parser.add_argument("--model_dir", type=str, default=model_dir, help="Directory where the model is stored.")
     parser.add_argument("--tokenizer_dir", type=str, default=model_dir, help="Directory where the tokenizer is stored.")
@@ -101,6 +102,9 @@ def main():
     # print(f"Training completed. Results: {results}")
     print(f"Training completed in {time_taken:.2f} seconds.")
     convert_and_save(model_dir=args.output_dir)
+
+    # do a hot reload of the model
+    requests.get("http://localhost:8000/reload_model")
 
 if __name__ == "__main__":
     main()

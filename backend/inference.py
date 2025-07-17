@@ -2,26 +2,30 @@ from optimum.onnxruntime import ORTModelForSequenceClassification
 from transformers import AutoTokenizer
 from time import time
 from transformers.pipelines import pipeline
+from transformers.pipelines.base import Pipeline
 from typing import Dict, Any, List
 import os
 
-models_dir = os.path.join(os.path.dirname(__file__), "models")
-onnx_model_dir = os.path.join(models_dir, "onnx")
-assert os.path.exists(onnx_model_dir), "ONNX model directory does not exist."
+def load_pipe():
+    models_dir = os.path.join(os.path.dirname(__file__), "models")
+    onnx_model_dir = os.path.join(models_dir, "onnx")
+    assert os.path.exists(onnx_model_dir), "ONNX model directory does not exist."
 
-model = ORTModelForSequenceClassification.from_pretrained(onnx_model_dir)
-try:
-    tokenizer = AutoTokenizer.from_pretrained(onnx_model_dir)
+    model = ORTModelForSequenceClassification.from_pretrained(onnx_model_dir)
     try:
-        tokenizer = AutoTokenizer.from_pretrained(models_dir)
-    except Exception as e:
-        raise RuntimeError(f"Failed to load tokenizer from {onnx_model_dir} or {models_dir}.") from e
-except:
-    pass
+        tokenizer = AutoTokenizer.from_pretrained(onnx_model_dir)
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(models_dir)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load tokenizer from {onnx_model_dir} or {models_dir}.") from e
+    except:
+        pass
 
-pipe = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device="cpu") # type: ignore
+    pipe = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device="cpu") # type: ignore
 
-def get_gentiment(text_for_inference: str) -> Dict[str, Any]:
+    return pipe
+
+def get_sentiment(text_for_inference: str, pipe: Pipeline) -> Dict[str, Any]:
     t = time()
     result = pipe(text_for_inference)
     time_taken = time() - t
@@ -33,6 +37,6 @@ def get_gentiment(text_for_inference: str) -> Dict[str, Any]:
         return {"error": e}
 
 if __name__ == "__main__":
-    result = get_gentiment("hello world")
+    result = get_sentiment("hello world", load_pipe())
     # print(f"Time taken: {result.get('time_taken', 0)}") # Time taken: 0.007698
     print(f"Result: {result}") # Result: {'label': 'NEGATIVE', 'score': 0.9998, 'time_taken': 0.007698}
